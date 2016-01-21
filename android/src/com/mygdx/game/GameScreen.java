@@ -78,7 +78,7 @@ public class GameScreen implements Screen {
 
         dogSprite = new Texture(Gdx.files.internal("dog_sprite_0_R.png"));
 
-
+        // test change
 
         //Lead
         leadLength = 100;
@@ -128,7 +128,7 @@ public class GameScreen implements Screen {
         dogPlayer.addSpriteSet(new String[]{"dog_sprite_6_R.png","dog_sprite_6_M.png","dog_sprite_6_L.png"});
 
         // create the obstacles array and spawn the first raindrop
-        obstacles = new Array<MovingBody>();
+        obstacles = new Array<>();
         spawnObstacles();
 
     }
