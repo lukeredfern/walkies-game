@@ -127,19 +127,15 @@ public class GameScreen implements Screen {
 
         // create the obstacles array and spawn the first raindrop
         obstacles = new Array<>();
-        spawnObstacles();
+		for (int i = 0; i<MathUtils.random(1,2); i++) {
+			MovingBody obstacle = new MovingBody(MathUtils.random(0, screenW - 64), screenH, 48, 48);
+			obstacles.add(obstacle);
+		}
+		lastObsTime = TimeUtils.nanoTime();
 
-    }
+	}
 
-    private void spawnObstacles() {
-        for (int i = 0; i<MathUtils.random(1,2); i++) {
-            MovingBody obstacle = new MovingBody(MathUtils.random(0, screenW - 64), screenH, 48, 48);
-            obstacles.add(obstacle);
-        }
-        lastObsTime = TimeUtils.nanoTime();
-    }
-
-    @Override
+	@Override
     public void render(float delta) {
         // pre calc
         float dTx = targetX - player.x;
@@ -197,18 +193,28 @@ public class GameScreen implements Screen {
 
         movePlayer(dTx, dTy, targetDist);
 
-        // check if we need to create a new raindrop
-        if (TimeUtils.nanoTime() - lastObsTime > 1000000000) // 1 second interval
-            spawnObstacles();
+		spawnObstacles();
 
-        dogModel(dt);
+		dogModel(dt);
 
         moveObstacles(dt);
 
         moveBackground(dt);
     }
 
-    private void drawScore() {
+	private void spawnObstacles() {
+		if (TimeUtils.nanoTime() - lastObsTime > 1e9 * 100 / Settings.playerWalkSpeed) {
+			if (MathUtils.random(1, 100) > Settings.obstacleSpawnRate) {
+				for (int i = 0; i< MathUtils.random(1, Settings.maxObstacleSpawnAtOnce); i++) {
+					MovingBody obstacle = new MovingBody(MathUtils.random(0, screenW - 64), screenH, 48, 48);
+					obstacles.add(obstacle);
+				}
+			}
+			lastObsTime = TimeUtils.nanoTime();
+		}
+	}
+
+	private void drawScore() {
         game.batch.begin();
         game.font.draw(game.batch, "Dog Interactions: " + obstaclesHit, 0, screenH);
         game.batch.end();
