@@ -72,12 +72,16 @@ public class Dog{
         int d = 0;
 
         if (direction > 7 * Math.PI / 4 || direction < Math.PI / 4){
+			// NORTH
             d = 0;
-        } else if (direction > Math.PI / 4 && direction < 3 * Math.PI / 4){
+        } else if (direction > Math.PI / 4 && direction < 3 * Math.PI / 4) {
+			// EAST
             d = 1;
-        } else if (direction > 3 * Math.PI / 4 && direction < 5 * Math.PI / 4){
+        } else if (direction > 3 * Math.PI / 4 && direction < 5 * Math.PI / 4) {
+			// SOUTH
             d = 2;
-        } else if (direction > 5 * Math.PI / 4 && direction < 7 * Math.PI / 4){
+        } else if (direction > 5 * Math.PI / 4 && direction < 7 * Math.PI / 4) {
+			// WEST
             d = 3;
         }
 

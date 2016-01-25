@@ -343,14 +343,14 @@ public class GameScreen implements Screen {
 
     private void dogModel(float dt) {
         // Dog model
-        dogPlayer.directionSpeed += 0.5*(Math.random()-0.5);
-        dogPlayer.directionSpeed = Math.min(dogPlayer.directionSpeed,3);
+        dogPlayer.directionSpeed += 0.5 * (Math.random() - 0.5);
+        dogPlayer.directionSpeed = Math.min(dogPlayer.directionSpeed, 3);
         dogPlayer.directionSpeed = Math.max(dogPlayer.directionSpeed, -3);
-        dogPlayer.direction += dt*dogPlayer.directionSpeed;
-        if (dogPlayer.direction>2*Math.PI){
-            dogPlayer.direction -= 2*Math.PI;
-        } else if (dogPlayer.direction<0){
-            dogPlayer.direction += 2*Math.PI;
+        dogPlayer.direction += dt * dogPlayer.directionSpeed;
+        if (dogPlayer.direction > 2 * Math.PI) {
+            dogPlayer.direction -= 2 * Math.PI;
+        } else if (dogPlayer.direction < 0) {
+            dogPlayer.direction += 2 * Math.PI;
         }
 
         // EoM Dog
