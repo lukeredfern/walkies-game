@@ -9,13 +9,13 @@ import com.badlogic.gdx.utils.Array;
  * Created by Rebecca on 20/01/2016.
  */
 public class Dog{
-    float x;
-    float y;
-    float a;
-    float b;
-    float vx;
-    float vy;
-    boolean enabledState;
+    float x;    // x-pos
+    float y;    // y-pos
+    float a;    // width
+    float b;    // height
+    float vx;   // x-velocity
+    float vy;   // y-velocity
+    boolean enabledState; // whether it interacts or not
     Array<Array<Texture>> sprites;
     int stepCounter;
 
@@ -28,7 +28,7 @@ public class Dog{
         this.vy = 0;
         this.enabledState = true;
         this.sprites = new Array<>();
-        this.stepCounter = 0;
+        this.stepCounter = 0; //
     }
 
     public Dog(float x, float y, float a, float b, float vx, float vy){

@@ -383,7 +383,7 @@ public class GameScreen implements Screen {
 
     private void moveBackground(float dt) {
         for (Rectangle bg : backgrounds) {
-            bg.y -= 200 * dt;
+            bg.y -= Settings.playerWalkSpeed * dt;
         }
     }
 
