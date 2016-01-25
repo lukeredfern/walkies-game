@@ -68,16 +68,16 @@ public class Dog{
         sprites.add(spriteList);
     }
 
-    public Texture getSprite(boolean nextStep, float dir){
+    public Texture getSprite(boolean nextStep){
         int d = 0;
 
-        if (dir>7*Math.PI/4||dir<Math.PI/4){
+        if (direction > 7 * Math.PI / 4 || direction < Math.PI / 4){
             d = 0;
-        } else if (dir>Math.PI/4&&dir<3*Math.PI/4){
+        } else if (direction > Math.PI / 4 && direction < 3 * Math.PI / 4){
             d = 1;
-        } else if (dir>3*Math.PI/4&&dir<5*Math.PI/4){
+        } else if (direction > 3 * Math.PI / 4 && direction < 5 * Math.PI / 4){
             d = 2;
-        } else if (dir>5*Math.PI/4&&dir<7*Math.PI/4){
+        } else if (direction > 5 * Math.PI / 4 && direction < 7 * Math.PI / 4){
             d = 3;
         }
 
