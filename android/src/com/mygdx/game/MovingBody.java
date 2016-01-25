@@ -15,6 +15,8 @@ public class MovingBody {
     float vy;
     boolean enabledState;
 
+    float maxSpeed;
+
     public MovingBody(float x, float y, float a, float b){
         this.x = x;
         this.y = y;

@@ -47,7 +47,6 @@ public class GameScreen implements Screen {
 
     Dog dogPlayer;
     MovingBody player;
-    float maxSpeed;
 
     float targetX;
     float targetY;
@@ -108,7 +107,7 @@ public class GameScreen implements Screen {
 
         // create width Rectangle to logically represent the bucket
         player = new MovingBody(screenW / 2, 20,manUpImages.get(0).getWidth(),manUpImages.get(0).getHeight());
-        maxSpeed = 10;
+        player.maxSpeed = 10;
 
         lastStepTime = TimeUtils.nanoTime();
 
@@ -182,7 +181,7 @@ public class GameScreen implements Screen {
         // process user input
         processUserInput();
 
-        // make sure the bucket stays within the screen bounds
+        // make sure the player stays within the screen bounds
         clampPlayer();
 
         movePlayer(dTx, dTy, targetDist);
@@ -233,7 +232,7 @@ public class GameScreen implements Screen {
 
     private void drawDog(boolean nextStepDog) {
         game.batch.begin();
-        game.batch.draw(dogPlayer.getSprite(nextStepDog, dogPlayer.direction), dogPlayer.getRectangle().x, dogPlayer.getRectangle().y,48,48);
+        game.batch.draw(dogPlayer.getSprite(nextStepDog), dogPlayer.getRectangle().x, dogPlayer.getRectangle().y,48,48);
         game.batch.end();
     }
 
@@ -338,8 +337,8 @@ public class GameScreen implements Screen {
         // Move player
 
         float[] targetVec = new float[]{dTx / targetDist, dTy / targetDist};
-        player.x = player.x + Math.min(0.1f * targetDist * targetVec[0], maxSpeed);
-        player.y = player.y + Math.min(0.1f * targetDist * targetVec[1], maxSpeed);
+        player.x = player.x + Math.min(0.1f * targetDist * targetVec[0], player.maxSpeed);
+        player.y = player.y + Math.min(0.1f * targetDist * targetVec[1], player.maxSpeed);
     }
 
     private void dogModel(float dt) {
