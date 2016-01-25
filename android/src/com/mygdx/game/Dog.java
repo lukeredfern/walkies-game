@@ -11,19 +11,25 @@ import com.badlogic.gdx.utils.Array;
 public class Dog{
     float x;    // x-pos
     float y;    // y-pos
-    float a;    // width
-    float b;    // height
+    float width;    // width
+    float height;    // height
     float vx;   // x-velocity
     float vy;   // y-velocity
     boolean enabledState; // whether it interacts or not
     Array<Array<Texture>> sprites;
     int stepCounter;
 
-    public Dog(float x, float y, float a, float b){
+	float mass;
+	float damping;
+	float force;
+	float direction;
+	float directionSpeed;
+
+    public Dog(float x, float y, float width, float b){
         this.x = x;
         this.y = y;
-        this.a = a;
-        this.b = b;
+        this.width = width;
+        this.height = b;
         this.vx = 0;
         this.vy = 0;
         this.enabledState = true;
@@ -34,8 +40,8 @@ public class Dog{
     public Dog(float x, float y, float a, float b, float vx, float vy){
         this.x = x;
         this.y = y;
-        this.a = a;
-        this.b = b;
+        this.width = a;
+        this.height = b;
         this.vx = vx;
         this.vy = vy;
         this.enabledState = true;
@@ -46,10 +52,10 @@ public class Dog{
 
     public Rectangle getRectangle(){
         Rectangle rectangle = new Rectangle();
-        rectangle.x = x - a/2;
-        rectangle.y = y - b/2;
-        rectangle.width = a;
-        rectangle.height = b;
+        rectangle.x = x - width /2;
+        rectangle.y = y - height /2;
+        rectangle.width = width;
+        rectangle.height = height;
 
         return rectangle;
     }

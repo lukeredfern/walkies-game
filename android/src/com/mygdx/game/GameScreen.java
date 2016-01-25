@@ -43,12 +43,6 @@ public class GameScreen implements Screen {
     float leadStiffness;
     float leadDamping;
 
-    float dogMass;
-    float dogDamping;
-    float dogForce;
-    float dogDirection;
-    float dogDirectionSpeed;
-
     ShapeRenderer shapeRenderer;
 
     Dog dogPlayer;
@@ -84,11 +78,11 @@ public class GameScreen implements Screen {
         leadDamping = 100.0f;
 
         // dog
-        dogMass = 1;
-        dogDamping = 10;
-        dogForce = 1000;
-        dogDirection = 0;
-        dogDirectionSpeed = 0;
+        dogPlayer.mass = 1;
+        dogPlayer.damping = 10;
+        dogPlayer.force = 1000;
+        dogPlayer.direction = 0;
+        dogPlayer.directionSpeed = 0;
 
         //target
         targetX = screenW / 2;
@@ -112,7 +106,7 @@ public class GameScreen implements Screen {
         camera = new OrthographicCamera();
         camera.setToOrtho(false, screenW, screenH);
 
-        // create a Rectangle to logically represent the bucket
+        // create width Rectangle to logically represent the bucket
         player = new MovingBody(screenW / 2, 20,manUpImages.get(0).getWidth(),manUpImages.get(0).getHeight());
         maxSpeed = 10;
 
@@ -154,7 +148,7 @@ public class GameScreen implements Screen {
         }
 
 
-        // clear the screen with a dark blue color. The
+        // clear the screen with width dark blue color. The
         // arguments to glClearColor are the red, green
         // blue and alpha component in the range [0,1]
         // of the color to be used to clear the screen.
@@ -239,7 +233,7 @@ public class GameScreen implements Screen {
 
     private void drawDog(boolean nextStepDog) {
         game.batch.begin();
-        game.batch.draw(dogPlayer.getSprite(nextStepDog, dogDirection), dogPlayer.getRectangle().x, dogPlayer.getRectangle().y,48,48);
+        game.batch.draw(dogPlayer.getSprite(nextStepDog, dogPlayer.direction), dogPlayer.getRectangle().x, dogPlayer.getRectangle().y,48,48);
         game.batch.end();
     }
 
@@ -308,7 +302,7 @@ public class GameScreen implements Screen {
 
         Rectangle dogBoundingBox = dogPlayer.getRectangle();
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        shapeRenderer.setColor(1, 0, 0, 1);	// 0-1; r, g, b, alpha
+        shapeRenderer.setColor(1, 0, 0, 1);	// 0-1; r, g, height, alpha
         shapeRenderer.rect(dogBoundingBox.x, dogBoundingBox.y, dogBoundingBox.width, dogBoundingBox.height);
         shapeRenderer.end();
 
@@ -350,14 +344,14 @@ public class GameScreen implements Screen {
 
     private void dogModel(float dt) {
         // Dog model
-        dogDirectionSpeed += 0.5*(Math.random()-0.5);
-        dogDirectionSpeed = Math.min(dogDirectionSpeed,3);
-        dogDirectionSpeed = Math.max(dogDirectionSpeed, -3);
-        dogDirection += dt*dogDirectionSpeed;
-        if (dogDirection>2*Math.PI){
-            dogDirection -= 2*Math.PI;
-        } else if (dogDirection<0){
-            dogDirection += 2*Math.PI;
+        dogPlayer.directionSpeed += 0.5*(Math.random()-0.5);
+        dogPlayer.directionSpeed = Math.min(dogPlayer.directionSpeed,3);
+        dogPlayer.directionSpeed = Math.max(dogPlayer.directionSpeed, -3);
+        dogPlayer.direction += dt*dogPlayer.directionSpeed;
+        if (dogPlayer.direction>2*Math.PI){
+            dogPlayer.direction -= 2*Math.PI;
+        } else if (dogPlayer.direction<0){
+            dogPlayer.direction += 2*Math.PI;
         }
 
         // EoM Dog
@@ -373,14 +367,14 @@ public class GameScreen implements Screen {
         } else {
             fLead = new float[]{0,0};
         }
-        float[] fDogDamp = new float[]{-dogPlayer.vx*dogDamping,-dogPlayer.vy*dogDamping};
-        float[] fDog = new float[]{(float) (dogForce*Math.sin(dogDirection)), (float) (dogForce*Math.cos(dogDirection))};
+        float[] fDogDamp = new float[]{-dogPlayer.vx*dogPlayer.damping,-dogPlayer.vy*dogPlayer.damping};
+        float[] fDog = new float[]{(float) (dogPlayer.force*Math.sin(dogPlayer.direction)), (float) (dogPlayer.force*Math.cos(dogPlayer.direction))};
         float[] fTot = new float[]{fLead[0]+fDogDamp[0]+fDog[0],fLead[1]+fDogDamp[1]+fDog[1]};
 
-        float[] acceleration = new float[]{fTot[0]/dogMass, fTot[1]/dogMass};
+        float[] acceleration = new float[]{fTot[0]/dogPlayer.mass, fTot[1]/dogPlayer.mass};
         dogPlayer.vx = dogPlayer.vx + acceleration[0]*dt;
         dogPlayer.vy = dogPlayer.vy + acceleration[1]*dt;
-        //Log.d("a", String.valueOf(acceleration[0]) + "," + String.valueOf(acceleration[1]));
+        //Log.d("width", String.valueOf(acceleration[0]) + "," + String.valueOf(acceleration[1]));
         //Log.d("v", String.valueOf(dogPlayer.vx) + "," + String.valueOf(dogPlayer.vy));
 
         dogPlayer.x = dogPlayer.x + dogPlayer.vx*dt;
@@ -390,7 +384,7 @@ public class GameScreen implements Screen {
     private void moveObstacles(float dt) {
         // move the obstacles, remove any that are beneath the bottom edge of
         // the screen or that hit the bucket. In the later case we increase the
-        // value our drops counter and add a sound effect.
+        // value our drops counter and add width sound effect.
         Iterator<MovingBody> iter = obstacles.iterator();
         while (iter.hasNext()) {
             MovingBody obstacle = iter.next();
