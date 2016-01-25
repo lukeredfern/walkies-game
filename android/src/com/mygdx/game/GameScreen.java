@@ -11,6 +11,8 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
@@ -183,10 +185,10 @@ public class GameScreen implements Screen {
         // Obstacles
         drawObstacles();
 
-        // Player Dog
         drawDog(nextStepDog);
         drawLead();
         drawPlayer();
+        drawBoundingBoxes();
         drawScore();
 
         // process user input
@@ -209,7 +211,9 @@ public class GameScreen implements Screen {
     }
 
     private void drawScore() {
+        game.batch.begin();
         game.font.draw(game.batch, "Dog Interactions: " + obstaclesHit, 0, screenH);
+        game.batch.end();
     }
 
     private void drawPlayer() {
@@ -295,6 +299,23 @@ public class GameScreen implements Screen {
         }
     }
 
+    private void drawBoundingBoxes() {
+        // dog
+
+        Rectangle dogBoundingBox = dogPlayer.getRectangle();
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.setColor(1, 0, 0, 1);	// 0-1; r, g, b, alpha
+        shapeRenderer.rect(dogBoundingBox.x, dogBoundingBox.y, dogBoundingBox.width, dogBoundingBox.height);
+        shapeRenderer.end();
+
+        // player
+        Rectangle playerBoundingBox = player.getRectangle();
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.setColor(1, 0, 0, 1);
+        shapeRenderer.rect(playerBoundingBox.x, playerBoundingBox.y, playerBoundingBox.width, playerBoundingBox.height);
+        shapeRenderer.end();
+    }
+
     private void clampBucket() {
         // make sure the bucket stays within the screen bounds
         if (player.x < 0)
@@ -369,7 +390,7 @@ public class GameScreen implements Screen {
         Iterator<MovingBody> iter = obstacles.iterator();
         while (iter.hasNext()) {
             MovingBody obstacle = iter.next();
-            obstacle.y -= 200 * dt;
+            obstacle.y -= Settings.playerWalkSpeed * dt;
             if (obstacle.y + 64 < 0)
                 iter.remove();
             if (obstacle.enabledState && obstacle.getRectangle().overlaps(dogPlayer.getRectangle())) {
