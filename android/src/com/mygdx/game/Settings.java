@@ -10,7 +10,7 @@ public class Settings {
         return ourInstance;
     }
 
-    public static final int playerWalkSpeed = 200;
+    public static final int playerWalkSpeed = 100;
 
     private Settings() {
     }

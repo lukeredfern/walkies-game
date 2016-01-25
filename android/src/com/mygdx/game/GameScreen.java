@@ -11,8 +11,6 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.Sprite;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
@@ -195,7 +193,7 @@ public class GameScreen implements Screen {
         processUserInput();
 
         // make sure the bucket stays within the screen bounds
-        clampBucket();
+        clampPlayer();
 
         movePlayer(dTx, dTy, targetDist);
 
@@ -316,7 +314,7 @@ public class GameScreen implements Screen {
         shapeRenderer.end();
     }
 
-    private void clampBucket() {
+    private void clampPlayer() {
         // make sure the bucket stays within the screen bounds
         if (player.x < 0)
             player.x = 0;
