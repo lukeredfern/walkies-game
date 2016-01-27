@@ -9,12 +9,12 @@ import com.badlogic.gdx.utils.Array;
  * Created by Rebecca on 20/01/2016.
  */
 public class Dog{
-    float x;    // x-pos
-    float y;    // y-pos
+    float x;    // x-pos relative to screen (but also world)
+    float y;    // y-pos relative to screen // After calculating dog.y take off screenSpeed*dt
     float width;    // width
     float height;    // height
-    float vx;   // x-velocity
-    float vy;   // y-velocity
+    float vx;   // x-velocity relative to world
+    float vy;   // y-velocity relative to world
     boolean enabledState; // whether it interacts or not
     Array<Array<Texture>> sprites;
     int stepCounter;
