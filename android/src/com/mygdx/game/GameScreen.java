@@ -26,11 +26,13 @@ public class GameScreen implements Screen {
     Texture dropImage;
     Texture grassBackGround;
     Texture dogSprite;
+    Texture boneSprite;
+    ArrayList<Texture> obstacleSprites;
     ArrayList<Texture> manUpImages;
     Sound dropSound;
     Music rainMusic;
     OrthographicCamera camera;
-    Array<MovingBody> obstacles;
+    Array<Obstacle> obstacles;
     long lastObsTime;
     long lastStepTime;
     int stepCounter = 0;
@@ -57,7 +59,7 @@ public class GameScreen implements Screen {
     float gameScore;
     float barWidthRatio = 0.8f;
 
-
+    float[] obstaclePenalty;
 
     public GameScreen(final Drop gam) {
         this.game = gam;
@@ -70,7 +72,6 @@ public class GameScreen implements Screen {
         manUpImages.add(new Texture(Gdx.files.internal("man_up_right.png")));
         grassBackGround = new Texture(Gdx.files.internal("grass_tile.png"));
 
-        dogSprite = new Texture(Gdx.files.internal("dog_sprite_0_R.png"));
 
         // test change
 
@@ -89,7 +90,7 @@ public class GameScreen implements Screen {
 
         //background
         backgrounds = new Array<>();
-        backgrounds.add(new Rectangle(0,0,789,678));
+        backgrounds.add(new Rectangle(0, 0, 789, 678));
         if (backgrounds.get(0).height+backgrounds.get(0).y<screenH){
             backgrounds.add(new Rectangle(0,backgrounds.get(0).height,789,678));
         }
@@ -112,9 +113,9 @@ public class GameScreen implements Screen {
         //Dog player
         dogPlayer = new Dog(screenW / 2, 100,48,48);
         dogPlayer.addSpriteSet(new String[]{"dog_sprite_0_R.png", "dog_sprite_0_M.png", "dog_sprite_0_L.png"});
-        dogPlayer.addSpriteSet(new String[]{"dog_sprite_2_R.png","dog_sprite_2_M.png","dog_sprite_2_L.png"});
-        dogPlayer.addSpriteSet(new String[]{"dog_sprite_4_R.png","dog_sprite_4_M.png","dog_sprite_4_L.png"});
-        dogPlayer.addSpriteSet(new String[]{"dog_sprite_6_R.png","dog_sprite_6_M.png","dog_sprite_6_L.png"});
+        dogPlayer.addSpriteSet(new String[]{"dog_sprite_2_R.png", "dog_sprite_2_M.png", "dog_sprite_2_L.png"});
+        dogPlayer.addSpriteSet(new String[]{"dog_sprite_4_R.png", "dog_sprite_4_M.png", "dog_sprite_4_L.png"});
+        dogPlayer.addSpriteSet(new String[]{"dog_sprite_6_R.png", "dog_sprite_6_M.png", "dog_sprite_6_L.png"});
 
         // dog
         dogPlayer.mass = 1;
@@ -125,11 +126,6 @@ public class GameScreen implements Screen {
 
         // create the obstacles array and spawn the first raindrop
         obstacles = new Array<>();
-		for (int i = 0; i<MathUtils.random(1,2); i++) {
-			MovingBody obstacle = new MovingBody(MathUtils.random(0, screenW - 64), screenH, 48, 48);
-			obstacles.add(obstacle);
-		}
-		lastObsTime = TimeUtils.nanoTime();
 
         // Score
         gameScore = 0.5f;
@@ -204,6 +200,8 @@ public class GameScreen implements Screen {
         moveObstacles(dt);
 
         moveBackground(dt);
+
+        updateGameScore(dt);
     }
 
     private void drawScoreIndicator() {
@@ -228,8 +226,8 @@ public class GameScreen implements Screen {
 		if (TimeUtils.nanoTime() - lastObsTime > 1e9 * 100 / Settings.scrollSpeed) {
 			if (MathUtils.random(1, 100) > Settings.obstacleSpawnRate) {
 				for (int i = 0; i< MathUtils.random(1, Settings.maxObstacleSpawnAtOnce); i++) {
-					MovingBody obstacle = new MovingBody(MathUtils.random(0, screenW - 64), screenH, 48, 48);
-					obstacles.add(obstacle);
+					Obstacle obstacle = new Obstacle(MathUtils.random(0, screenW - 64), screenH, MathUtils.random(0, 1));
+                    obstacles.add(obstacle);
 				}
 			}
 			lastObsTime = TimeUtils.nanoTime();
@@ -261,19 +259,27 @@ public class GameScreen implements Screen {
 
     private void drawDog(boolean nextStepDog) {
         game.batch.begin();
-        game.batch.draw(dogPlayer.getSprite(nextStepDog), dogPlayer.getRectangle().x, dogPlayer.getRectangle().y,48,48);
+        game.batch.draw(dogPlayer.getSprite(nextStepDog), dogPlayer.getRectangle().x, dogPlayer.getRectangle().y, 48, 48);
         game.batch.end();
     }
 
     private void drawObstacles() {
+        game.batch.begin();
+
+
         shapeRenderer.setProjectionMatrix(camera.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(62.0f / 255, 39.0f / 255, 35.0f / 255, 1);
-        for (MovingBody obs : obstacles) {
-            shapeRenderer.rect(obs.getRectangle().x, obs.getRectangle().y, obs.getRectangle().width, obs.getRectangle().height);
+        for (Obstacle obs : obstacles) {
+            if (obs.sprite==null) {
+                shapeRenderer.rect(obs.getRectangle().x, obs.getRectangle().y, obs.getRectangle().width, obs.getRectangle().height);
+            }   else {
+                game.batch.draw(obs.sprite, obs.getRectangle().x, obs.getRectangle().y, obs.getRectangle().width, obs.getRectangle().height);
+            }
         }
 
         shapeRenderer.end();
+        game.batch.end();
     }
 
     private void drawBackground() {
@@ -413,21 +419,29 @@ public class GameScreen implements Screen {
         // move the obstacles, remove any that are beneath the bottom edge of
         // the screen or that hit the bucket. In the later case we increase the
         // value our drops counter and add width sound effect.
-        Iterator<MovingBody> iter = obstacles.iterator();
+        Iterator<Obstacle> iter = obstacles.iterator();
         while (iter.hasNext()) {
-            MovingBody obstacle = iter.next();
+            Obstacle obstacle = iter.next();
             obstacle.y -= Settings.scrollSpeed * dt;
             if (obstacle.y + 64 < 0)
                 iter.remove();
             if (obstacle.enabledState && obstacle.getRectangle().overlaps(dogPlayer.getRectangle())) {
                 obstaclesHit++;
-                gameScore += -0.1;
+                gameScore += obstacle.penalty;
                 //dropSound.play();
                 //iter.remove();
                 obstacle.enabledState = false;
+                if (!obstacle.persist){
+                    iter.remove();
+                }
             }
         }
-        gameScore += 0.01*dt;
+    }
+
+    private void updateGameScore(float dt){
+        gameScore += 0.005*dt;
+        gameScore = Math.max(gameScore,0);
+        gameScore = Math.min(gameScore,1);
     }
 
     private void moveBackground(float dt) {
