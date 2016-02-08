@@ -35,6 +35,7 @@ public class Dog{
         this.enabledState = true;
         this.sprites = new Array<>();
         this.stepCounter = 0; //
+        this.mass = 0;
     }
 
     public Dog(float x, float y, float a, float b, float vx, float vy){
@@ -48,6 +49,7 @@ public class Dog{
         this.sprites = new Array<>();
         this.stepCounter = 0;
 
+        this.mass = 0;
     }
 
     public Rectangle getRectangle(){

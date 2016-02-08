@@ -9,7 +9,7 @@ public class Settings {
     public static int obstacleSpawnRate = 50;		// percentage chance of spawning an obstacle per iteration
 	public static int maxObstacleSpawnAtOnce = 2;	// maximum number of obstacles to spawn per iteration
 
-	public static final int playerWalkSpeed = 100;
+	public static final int scrollSpeed = 100;
 
 
 

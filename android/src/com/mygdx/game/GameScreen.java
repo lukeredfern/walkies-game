@@ -76,12 +76,7 @@ public class GameScreen implements Screen {
         leadStiffness = 10000.0f;
         leadDamping = 100.0f;
 
-        // dog
-        dogPlayer.mass = 1;
-        dogPlayer.damping = 10;
-        dogPlayer.force = 1000;
-        dogPlayer.direction = 0;
-        dogPlayer.directionSpeed = 0;
+
 
         //target
         targetX = screenW / 2;
@@ -113,10 +108,17 @@ public class GameScreen implements Screen {
 
         //Dog player
         dogPlayer = new Dog(screenW / 2, 100,48,48);
-        dogPlayer.addSpriteSet(new String[]{"dog_sprite_0_R.png","dog_sprite_0_M.png","dog_sprite_0_L.png"});
+        dogPlayer.addSpriteSet(new String[]{"dog_sprite_0_R.png", "dog_sprite_0_M.png", "dog_sprite_0_L.png"});
         dogPlayer.addSpriteSet(new String[]{"dog_sprite_2_R.png","dog_sprite_2_M.png","dog_sprite_2_L.png"});
         dogPlayer.addSpriteSet(new String[]{"dog_sprite_4_R.png","dog_sprite_4_M.png","dog_sprite_4_L.png"});
         dogPlayer.addSpriteSet(new String[]{"dog_sprite_6_R.png","dog_sprite_6_M.png","dog_sprite_6_L.png"});
+
+        // dog
+        dogPlayer.mass = 1;
+        dogPlayer.damping = 10;
+        dogPlayer.force = 1000;
+        dogPlayer.direction = 0;
+        dogPlayer.directionSpeed = 0;
 
         // create the obstacles array and spawn the first raindrop
         obstacles = new Array<>();
@@ -196,7 +198,7 @@ public class GameScreen implements Screen {
     }
 
 	private void spawnObstacles() {
-		if (TimeUtils.nanoTime() - lastObsTime > 1e9 * 100 / Settings.playerWalkSpeed) {
+		if (TimeUtils.nanoTime() - lastObsTime > 1e9 * 100 / Settings.scrollSpeed) {
 			if (MathUtils.random(1, 100) > Settings.obstacleSpawnRate) {
 				for (int i = 0; i< MathUtils.random(1, Settings.maxObstacleSpawnAtOnce); i++) {
 					MovingBody obstacle = new MovingBody(MathUtils.random(0, screenW - 64), screenH, 48, 48);
@@ -387,7 +389,7 @@ public class GameScreen implements Screen {
         Iterator<MovingBody> iter = obstacles.iterator();
         while (iter.hasNext()) {
             MovingBody obstacle = iter.next();
-            obstacle.y -= Settings.playerWalkSpeed * dt;
+            obstacle.y -= Settings.scrollSpeed * dt;
             if (obstacle.y + 64 < 0)
                 iter.remove();
             if (obstacle.enabledState && obstacle.getRectangle().overlaps(dogPlayer.getRectangle())) {
@@ -401,7 +403,7 @@ public class GameScreen implements Screen {
 
     private void moveBackground(float dt) {
         for (Rectangle bg : backgrounds) {
-            bg.y -= Settings.playerWalkSpeed * dt;
+            bg.y -= Settings.scrollSpeed * dt;
         }
     }
 
