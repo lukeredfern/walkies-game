@@ -205,21 +205,63 @@ public class GameScreen implements Screen {
     }
 
     private void drawScoreIndicator() {
+        float thickness = 40;
+        float weight = 2;
+        float offset = 20;
         Gdx.gl.glEnable(GL10.GL_BLEND);
         Gdx.gl.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
         shapeRenderer.setProjectionMatrix(camera.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(120.0f / 255, 144.0f / 255, 156.0f / 255, 0.8f);
-        shapeRenderer.rect(screenW / 2 - 0.5f * screenW * barWidthRatio, 20, screenW * barWidthRatio, 40);
+        shapeRenderer.rect(screenW / 2 - 0.5f * screenW * barWidthRatio, offset, screenW * barWidthRatio, thickness);
         if (gameScore>0.5) {
             shapeRenderer.setColor(2.0f / 255, 136.0f / 255, 209.0f / 255, 1);
-            shapeRenderer.rect(screenW/2, 20, (gameScore - 0.5f) * screenW * barWidthRatio, 40);
+            shapeRenderer.rect(screenW/2, offset, (gameScore - 0.5f) * screenW * barWidthRatio, thickness);
         } else {
             shapeRenderer.setColor(229.0f / 255, 57.0f / 255, 53.0f / 255, 1);
-            shapeRenderer.rect(screenW/2, 20, -(0.5f-gameScore) * screenW * barWidthRatio, 40);
+            shapeRenderer.rect(screenW/2, offset, -(0.5f-gameScore) * screenW * barWidthRatio, thickness);
         }
         shapeRenderer.end();
         Gdx.gl.glDisable(GL10.GL_BLEND);
+
+        // Border
+        shapeRenderer.setProjectionMatrix(camera.combined);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        //shapeRenderer.setColor(62.0f / 255, 39.0f / 255, 35.0f / 255, 1);
+        //shapeRenderer.rect(dogPlayer.getRectangle().x, dogPlayer.getRectangle().y, dogPlayer.getRectangle().width, dogPlayer.getRectangle().height);
+        shapeRenderer.setColor(0, 0, 0, 1);
+        shapeRenderer.rectLine(screenW / 2 - 0.5f * screenW * barWidthRatio - weight / 2, offset, screenW / 2 + 0.5f * screenW * barWidthRatio + weight / 2, offset, weight * 2);
+        shapeRenderer.rectLine(screenW / 2 - 0.5f * screenW * barWidthRatio - weight / 2, offset + thickness, screenW / 2 + 0.5f * screenW * barWidthRatio + weight / 2, offset + thickness, weight * 2);
+        shapeRenderer.rectLine(screenW / 2 - 0.5f * screenW * barWidthRatio, offset-weight/2, screenW / 2 - 0.5f * screenW * barWidthRatio, offset+thickness+weight/2, weight*2);
+        shapeRenderer.rectLine(screenW / 2 + 0.5f * screenW * barWidthRatio, offset - weight / 2, screenW / 2 + 0.5f * screenW * barWidthRatio, offset + thickness + weight / 2, weight*2);
+
+        shapeRenderer.rectLine(screenW / 2 - 0.25f * screenW * barWidthRatio, offset - weight / 2, screenW / 2 - 0.25f * screenW * barWidthRatio, offset + thickness * 0.2f + weight / 2, weight * 2);
+        shapeRenderer.rectLine(screenW / 2 - 0.25f * screenW * barWidthRatio, offset+thickness*0.8f-weight/2, screenW / 2 - 0.25f * screenW * barWidthRatio, offset+thickness+weight/2, weight*2);
+
+        shapeRenderer.rectLine(screenW / 2 , offset - weight / 2, screenW / 2 , offset + thickness * 0.2f + weight / 2, weight * 2);
+        shapeRenderer.rectLine(screenW / 2 , offset+thickness*0.8f-weight/2, screenW / 2, offset+thickness+weight/2, weight*2);
+
+        shapeRenderer.rectLine(screenW / 2 + 0.25f * screenW * barWidthRatio, offset - weight / 2, screenW / 2 + 0.25f * screenW * barWidthRatio, offset + thickness * 0.2f + weight / 2, weight * 2);
+        shapeRenderer.rectLine(screenW / 2 + 0.25f * screenW * barWidthRatio, offset + thickness * 0.8f - weight / 2, screenW / 2 + 0.25f * screenW * barWidthRatio, offset + thickness+weight/2, weight*2);
+
+
+        shapeRenderer.setColor(1, 1, 1, 1);
+        shapeRenderer.rectLine(screenW / 2 - 0.5f * screenW * barWidthRatio, offset, screenW / 2 + 0.5f * screenW * barWidthRatio, offset, weight);
+        shapeRenderer.rectLine(screenW / 2 - 0.5f * screenW * barWidthRatio, offset+thickness, screenW / 2 + 0.5f * screenW * barWidthRatio, offset+thickness, weight);
+        shapeRenderer.rectLine(screenW / 2 - 0.5f * screenW * barWidthRatio, offset, screenW / 2 - 0.5f * screenW * barWidthRatio, offset+thickness, weight);
+        shapeRenderer.rectLine(screenW / 2 + 0.5f * screenW * barWidthRatio, offset, screenW / 2 + 0.5f * screenW * barWidthRatio, offset + thickness, weight);
+
+        shapeRenderer.rectLine(screenW / 2 - 0.25f * screenW * barWidthRatio, offset, screenW / 2 - 0.25f * screenW * barWidthRatio, offset+thickness*0.2f, weight);
+        shapeRenderer.rectLine(screenW / 2 - 0.25f * screenW * barWidthRatio, offset+thickness*0.8f, screenW / 2 - 0.25f * screenW * barWidthRatio, offset+thickness, weight);
+
+        shapeRenderer.rectLine(screenW / 2 , offset, screenW / 2 , offset + thickness * 0.2f, weight);
+        shapeRenderer.rectLine(screenW / 2 , offset+thickness*0.8f, screenW / 2, offset+thickness, weight);
+
+        shapeRenderer.rectLine(screenW / 2 + 0.25f * screenW * barWidthRatio, offset, screenW / 2 + 0.25f * screenW * barWidthRatio, offset+thickness*0.2f, weight);
+        shapeRenderer.rectLine(screenW / 2 + 0.25f * screenW * barWidthRatio, offset+thickness*0.8f, screenW / 2 + 0.25f * screenW * barWidthRatio, offset+thickness, weight);
+
+
+        shapeRenderer.end();
     }
 
     private void spawnObstacles() {
@@ -253,7 +295,7 @@ public class GameScreen implements Screen {
         //shapeRenderer.setColor(62.0f / 255, 39.0f / 255, 35.0f / 255, 1);
         //shapeRenderer.rect(dogPlayer.getRectangle().x, dogPlayer.getRectangle().y, dogPlayer.getRectangle().width, dogPlayer.getRectangle().height);
         shapeRenderer.setColor(0.0f / 255, 145.0f / 255, 234.0f / 255, 1);
-        shapeRenderer.line(player.x, player.y, dogPlayer.x, dogPlayer.y);
+        shapeRenderer.rectLine(player.x, player.y, dogPlayer.x, dogPlayer.y, 3);
         shapeRenderer.end();
     }
 
