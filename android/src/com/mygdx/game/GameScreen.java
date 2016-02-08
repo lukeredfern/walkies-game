@@ -54,6 +54,9 @@ public class GameScreen implements Screen {
     float targetT;
     Array<Rectangle> backgrounds;
 
+    float gameScore;
+    float barWidthRatio = 0.8f;
+
 
 
     public GameScreen(final Drop gam) {
@@ -128,6 +131,9 @@ public class GameScreen implements Screen {
 		}
 		lastObsTime = TimeUtils.nanoTime();
 
+        // Score
+        gameScore = 0.5f;
+
 	}
 
 	@Override
@@ -180,6 +186,9 @@ public class GameScreen implements Screen {
         drawBoundingBoxes();
         drawScore();
 
+        // Score indicator
+        drawScoreIndicator();
+
         // process user input
         processUserInput();
 
@@ -197,7 +206,25 @@ public class GameScreen implements Screen {
         moveBackground(dt);
     }
 
-	private void spawnObstacles() {
+    private void drawScoreIndicator() {
+        Gdx.gl.glEnable(GL10.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+        shapeRenderer.setProjectionMatrix(camera.combined);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(120.0f / 255, 144.0f / 255, 156.0f / 255, 0.8f);
+        shapeRenderer.rect(screenW / 2 - 0.5f * screenW * barWidthRatio, 20, screenW * barWidthRatio, 40);
+        if (gameScore>0.5) {
+            shapeRenderer.setColor(2.0f / 255, 136.0f / 255, 209.0f / 255, 1);
+            shapeRenderer.rect(screenW/2, 20, (gameScore - 0.5f) * screenW * barWidthRatio, 40);
+        } else {
+            shapeRenderer.setColor(229.0f / 255, 57.0f / 255, 53.0f / 255, 1);
+            shapeRenderer.rect(screenW/2, 20, -(0.5f-gameScore) * screenW * barWidthRatio, 40);
+        }
+        shapeRenderer.end();
+        Gdx.gl.glDisable(GL10.GL_BLEND);
+    }
+
+    private void spawnObstacles() {
 		if (TimeUtils.nanoTime() - lastObsTime > 1e9 * 100 / Settings.scrollSpeed) {
 			if (MathUtils.random(1, 100) > Settings.obstacleSpawnRate) {
 				for (int i = 0; i< MathUtils.random(1, Settings.maxObstacleSpawnAtOnce); i++) {
@@ -394,11 +421,13 @@ public class GameScreen implements Screen {
                 iter.remove();
             if (obstacle.enabledState && obstacle.getRectangle().overlaps(dogPlayer.getRectangle())) {
                 obstaclesHit++;
+                gameScore += -0.1;
                 //dropSound.play();
                 //iter.remove();
                 obstacle.enabledState = false;
             }
         }
+        gameScore += 0.01*dt;
     }
 
     private void moveBackground(float dt) {
