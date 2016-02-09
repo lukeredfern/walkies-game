@@ -29,8 +29,6 @@ public class GameScreen implements Screen {
     Texture boneSprite;
     ArrayList<Texture> obstacleSprites;
     ArrayList<Texture> manUpImages;
-    Sound dropSound;
-    Music rainMusic;
     OrthographicCamera camera;
     Array<Obstacle> obstacles;
     long lastObsTime;
@@ -48,16 +46,15 @@ public class GameScreen implements Screen {
     ShapeRenderer shapeRenderer;
 
     Dog dogPlayer;
-    MovingBody player;
+    Player player;
 
-    float targetX;
-    float targetY;
     float targetR;
     float targetT;
     Array<Rectangle> backgrounds;
 
     float gameScore;
     float barWidthRatio = 0.8f;
+    private long lastDogTargetTime;
 
     float[] obstaclePenalty;
 
@@ -72,6 +69,7 @@ public class GameScreen implements Screen {
         manUpImages.add(new Texture(Gdx.files.internal("man_up_right.png")));
         grassBackGround = new Texture(Gdx.files.internal("grass_tile.png"));
 
+        dogSprite = new Texture(Gdx.files.internal("dog_sprite_0_R.png"));
 
         // test change
 
@@ -80,19 +78,15 @@ public class GameScreen implements Screen {
         leadStiffness = 10000.0f;
         leadDamping = 100.0f;
 
-
-
         //target
-        targetX = screenW / 2;
-        targetY = 200;
         targetR = 20;
         targetT = 3;
 
         //background
         backgrounds = new Array<>();
         backgrounds.add(new Rectangle(0, 0, 789, 678));
-        if (backgrounds.get(0).height+backgrounds.get(0).y<screenH){
-            backgrounds.add(new Rectangle(0,backgrounds.get(0).height,789,678));
+        if (backgrounds.get(0).height + backgrounds.get(0).y < screenH) {
+            backgrounds.add(new Rectangle(0, backgrounds.get(0).height, 789, 678));
         }
 
         // load the drop sound effect and the rain background "music"
@@ -105,24 +99,21 @@ public class GameScreen implements Screen {
         camera.setToOrtho(false, screenW, screenH);
 
         // create width Rectangle to logically represent the bucket
-        player = new MovingBody(screenW / 2, 20,manUpImages.get(0).getWidth(),manUpImages.get(0).getHeight());
-        player.maxSpeed = 10;
+        player = new Player(screenW / 2, 20,manUpImages.get(0).getWidth(),manUpImages.get(0).getHeight());
+        player.maxSpeed = 200;
 
         lastStepTime = TimeUtils.nanoTime();
 
-        //Dog player
-        dogPlayer = new Dog(screenW / 2, 100,48,48);
+        //Initialize Player's dog
+        dogPlayer = new Dog(screenW / 2, 100, 48, 48);
         dogPlayer.addSpriteSet(new String[]{"dog_sprite_0_R.png", "dog_sprite_0_M.png", "dog_sprite_0_L.png"});
         dogPlayer.addSpriteSet(new String[]{"dog_sprite_2_R.png", "dog_sprite_2_M.png", "dog_sprite_2_L.png"});
         dogPlayer.addSpriteSet(new String[]{"dog_sprite_4_R.png", "dog_sprite_4_M.png", "dog_sprite_4_L.png"});
         dogPlayer.addSpriteSet(new String[]{"dog_sprite_6_R.png", "dog_sprite_6_M.png", "dog_sprite_6_L.png"});
-
-        // dog
         dogPlayer.mass = 1;
         dogPlayer.damping = 10;
         dogPlayer.force = 1000;
-        dogPlayer.direction = 0;
-        dogPlayer.directionSpeed = 0;
+        dogPlayer.maxSpeed = 800;
 
         // create the obstacles array and spawn the first raindrop
         obstacles = new Array<>();
@@ -135,9 +126,9 @@ public class GameScreen implements Screen {
 	@Override
     public void render(float delta) {
         // pre calc
-        float dTx = targetX - player.x;
-        float dTy = targetY - player.y;
-        float targetDist = (float) Math.sqrt(dTy * dTy + dTx * dTx);
+        //float dTx = targetX - player.x;
+        //float dTy = targetY - player.y;
+        //float targetDist = (float) Math.sqrt(dTy * dTy + dTx * dTx);
         boolean nextStepDog = false;
 
 
@@ -171,7 +162,7 @@ public class GameScreen implements Screen {
         drawShadowCircle();
 
         // target
-        drawTarget(targetDist);
+        drawTarget();
 
         // Obstacles
         drawObstacles();
@@ -182,20 +173,19 @@ public class GameScreen implements Screen {
         drawBoundingBoxes();
         drawScore();
 
-        // Score indicator
         drawScoreIndicator();
 
         // process user input
         processUserInput();
 
-        // make sure the player stays within the screen bounds
-        clampPlayer();
-
-        movePlayer(dTx, dTy, targetDist);
+        player.update(dt);
 
 		spawnObstacles();
 
-		dogModel(dt);
+        // set dog target to random obstacle
+        changeDogTarget();
+
+        dogPlayer.update(dt, player);
 
         moveObstacles(dt);
 
@@ -264,21 +254,33 @@ public class GameScreen implements Screen {
         shapeRenderer.end();
     }
 
+    private void changeDogTarget() {
+        if (TimeUtils.nanoTime() - lastDogTargetTime > 1e9 * Global.dogTargetChangeTime // every 3 seconds
+                && obstacles.size > 0) {
+            dogPlayer.setTargetObstacle(obstacles.get(MathUtils.random(0, obstacles.size - 1)));
+            lastDogTargetTime = TimeUtils.nanoTime();
+        }
+    }
+
     private void spawnObstacles() {
-		if (TimeUtils.nanoTime() - lastObsTime > 1e9 * 100 / Settings.scrollSpeed) {
-			if (MathUtils.random(1, 100) > Settings.obstacleSpawnRate) {
-				for (int i = 0; i< MathUtils.random(1, Settings.maxObstacleSpawnAtOnce); i++) {
-					Obstacle obstacle = new Obstacle(MathUtils.random(0, screenW - 64), screenH, MathUtils.random(0, 1));
-                    obstacles.add(obstacle);
+		if (TimeUtils.nanoTime() - lastObsTime > 1e9 * 100 / Global.backgroundScrollSpeed) {
+			if (MathUtils.random(1, 100) > Global.obstacleSpawnRate) {
+				for (int i = 0; i< MathUtils.random(1, Global.maxObstacleSpawnAtOnce); i++) {
+					Obstacle obstacle = new Obstacle(MathUtils.random(0, screenW - 64), screenH, 48, 48, 0f, -Global.backgroundScrollSpeed);
+                    obstacle.setObstacleType(ObstacleType.values()[MathUtils.random(0, ObstacleType.values().length - 1)]);
+					obstacles.add(obstacle);
 				}
 			}
-			lastObsTime = TimeUtils.nanoTime();
+            lastObsTime = TimeUtils.nanoTime();
 		}
 	}
 
 	private void drawScore() {
         game.batch.begin();
         game.font.draw(game.batch, "Dog Interactions: " + obstaclesHit, 0, screenH);
+        game.font.draw(game.batch, "Dog velocity: " + dogPlayer.velocity.toString(), 0, screenH - 20);
+		game.font.draw(game.batch, "Dog position: " + dogPlayer.position.toString(), 0, screenH - 40);
+		game.font.draw(game.batch, "Target position: " + player.getTarget().toString(), 0, screenH - 60);
         game.batch.end();
     }
 
@@ -295,13 +297,13 @@ public class GameScreen implements Screen {
         //shapeRenderer.setColor(62.0f / 255, 39.0f / 255, 35.0f / 255, 1);
         //shapeRenderer.rect(dogPlayer.getRectangle().x, dogPlayer.getRectangle().y, dogPlayer.getRectangle().width, dogPlayer.getRectangle().height);
         shapeRenderer.setColor(0.0f / 255, 145.0f / 255, 234.0f / 255, 1);
-        shapeRenderer.rectLine(player.x, player.y, dogPlayer.x, dogPlayer.y, 3);
+        shapeRenderer.line(player.position.x, player.position.y, dogPlayer.position.x, dogPlayer.position.y);
         shapeRenderer.end();
     }
 
     private void drawDog(boolean nextStepDog) {
         game.batch.begin();
-        game.batch.draw(dogPlayer.getSprite(nextStepDog), dogPlayer.getRectangle().x, dogPlayer.getRectangle().y, 48, 48);
+        game.batch.draw(dogPlayer.getSprite(nextStepDog), dogPlayer.getRectangle().x, dogPlayer.getRectangle().y,48,48);
         game.batch.end();
     }
 
@@ -313,7 +315,7 @@ public class GameScreen implements Screen {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(62.0f / 255, 39.0f / 255, 35.0f / 255, 1);
         for (Obstacle obs : obstacles) {
-            if (obs.sprite==null) {
+            if (obs.sprite == null) {
                 shapeRenderer.rect(obs.getRectangle().x, obs.getRectangle().y, obs.getRectangle().width, obs.getRectangle().height);
             }   else {
                 game.batch.draw(obs.sprite, obs.getRectangle().x, obs.getRectangle().y, obs.getRectangle().width, obs.getRectangle().height);
@@ -353,21 +355,21 @@ public class GameScreen implements Screen {
         shapeRenderer.setProjectionMatrix(camera.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(new Color(1, 1, 1, 0.5f));
-        shapeRenderer.circle(player.x, player.y, leadLength, 180);
+        shapeRenderer.circle(player.position.x, player.position.y, leadLength, 180);
         shapeRenderer.end();
         Gdx.gl.glDisable(GL10.GL_BLEND);
     }
 
-    private void drawTarget(float targetDist) {
-        if (targetDist>5) {
+    private void drawTarget() {
+        if (player.getDistanceToTarget() > 5f) {
             Gdx.gl.glEnable(GL10.GL_BLEND);
             Gdx.gl.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
             shapeRenderer.setProjectionMatrix(camera.combined);
             shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
             shapeRenderer.setColor(1, 1, 1, 0.5f);
-            shapeRenderer.rect(targetX - targetT, targetY - targetR, 2 * targetT, targetR - targetT);
-            shapeRenderer.rect(targetX - targetT, targetY + targetT, 2 * targetT, targetR-targetT);
-            shapeRenderer.rect(targetX - targetR, targetY - targetT, 2 * targetR, 2 * targetT);
+            shapeRenderer.rect(player.getTarget().x - targetT, player.getTarget().y - targetR, 2 * targetT, targetR - targetT);
+            shapeRenderer.rect(player.getTarget().x - targetT, player.getTarget().y + targetT, 2 * targetT, targetR-targetT);
+            shapeRenderer.rect(player.getTarget().x - targetR, player.getTarget().y - targetT, 2 * targetR, 2 * targetT);
             shapeRenderer.end();
             Gdx.gl.glDisable(GL10.GL_BLEND);
         }
@@ -390,73 +392,6 @@ public class GameScreen implements Screen {
         shapeRenderer.end();
     }
 
-    private void clampPlayer() {
-        // make sure the bucket stays within the screen bounds
-        if (player.x < 0)
-            player.x = 0;
-        if (player.x > screenW)
-            player.x = screenW;
-        if (player.y < 0)
-            player.y = 0;
-        if (player.y > screenH)
-            player.y = screenH;
-        if (dogPlayer.x < 0)
-            dogPlayer.x = 0;
-        if (dogPlayer.x > screenW)
-            dogPlayer.x = screenW;
-        if (dogPlayer.y < 0)
-            dogPlayer.y = 0;
-        if (dogPlayer.y > screenH)
-            dogPlayer.y = screenH;
-    }
-
-    private void movePlayer(float dTx, float dTy, float targetDist) {
-        // Move player
-
-        float[] targetVec = new float[]{dTx / targetDist, dTy / targetDist};
-        player.x = player.x + Math.min(0.1f * targetDist * targetVec[0], player.maxSpeed);
-        player.y = player.y + Math.min(0.1f * targetDist * targetVec[1], player.maxSpeed);
-    }
-
-    private void dogModel(float dt) {
-        // Dog model
-        dogPlayer.directionSpeed += 0.5 * (Math.random() - 0.5);
-        dogPlayer.directionSpeed = Math.min(dogPlayer.directionSpeed, 3);
-        dogPlayer.directionSpeed = Math.max(dogPlayer.directionSpeed, -3);
-        dogPlayer.direction += dt * dogPlayer.directionSpeed;
-        if (dogPlayer.direction > 2 * Math.PI) {
-            dogPlayer.direction -= 2 * Math.PI;
-        } else if (dogPlayer.direction < 0) {
-            dogPlayer.direction += 2 * Math.PI;
-        }
-
-        // EoM Dog
-        float dx = player.x - dogPlayer.x;
-        float dy = player.y - dogPlayer.y;
-        float leadDist = (float) Math.sqrt(dy * dy + dx * dx);
-        float[] leadVec = new float[]{dx / leadDist, dy / leadDist};
-        float dL = leadDist/leadLength;
-
-        float[] fLead;
-        if (leadDist>leadLength) {
-            fLead = new float[]{dL*leadStiffness*leadVec[0],dL*leadStiffness*leadVec[1]};
-        } else {
-            fLead = new float[]{0,0};
-        }
-        float[] fDogDamp = new float[]{-dogPlayer.vx*dogPlayer.damping,-dogPlayer.vy*dogPlayer.damping};
-        float[] fDog = new float[]{(float) (dogPlayer.force*Math.sin(dogPlayer.direction)), (float) (dogPlayer.force*Math.cos(dogPlayer.direction))};
-        float[] fTot = new float[]{fLead[0]+fDogDamp[0]+fDog[0],fLead[1]+fDogDamp[1]+fDog[1]};
-
-        float[] acceleration = new float[]{fTot[0]/dogPlayer.mass, fTot[1]/dogPlayer.mass};
-        dogPlayer.vx = dogPlayer.vx + acceleration[0]*dt;
-        dogPlayer.vy = dogPlayer.vy + acceleration[1]*dt;
-        //Log.d("width", String.valueOf(acceleration[0]) + "," + String.valueOf(acceleration[1]));
-        //Log.d("v", String.valueOf(dogPlayer.vx) + "," + String.valueOf(dogPlayer.vy));
-
-        dogPlayer.x = dogPlayer.x + dogPlayer.vx*dt;
-        dogPlayer.y = dogPlayer.y + dogPlayer.vy*dt;
-    }
-
     private void moveObstacles(float dt) {
         // move the obstacles, remove any that are beneath the bottom edge of
         // the screen or that hit the bucket. In the later case we increase the
@@ -464,8 +399,8 @@ public class GameScreen implements Screen {
         Iterator<Obstacle> iter = obstacles.iterator();
         while (iter.hasNext()) {
             Obstacle obstacle = iter.next();
-            obstacle.y -= Settings.scrollSpeed * dt;
-            if (obstacle.y + 64 < 0)
+            obstacle.update(dt);
+            if (obstacle.position.y + 64 < 0)
                 iter.remove();
             if (obstacle.enabledState && obstacle.getRectangle().overlaps(dogPlayer.getRectangle())) {
                 obstaclesHit++;
@@ -488,7 +423,7 @@ public class GameScreen implements Screen {
 
     private void moveBackground(float dt) {
         for (Rectangle bg : backgrounds) {
-            bg.y -= Settings.scrollSpeed * dt;
+            bg.y -= Global.backgroundScrollSpeed * dt;
         }
     }
 
@@ -497,8 +432,7 @@ public class GameScreen implements Screen {
             Vector3 touchPos = new Vector3();
             touchPos.set(Gdx.input.getX(), Gdx.input.getY(), 0);
             camera.unproject(touchPos);
-            targetX = touchPos.x;
-            targetY = touchPos.y;
+            player.setTarget(touchPos.x, touchPos.y);
         }
     }
 
