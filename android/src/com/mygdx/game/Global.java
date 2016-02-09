@@ -19,10 +19,10 @@ public class Global {
 
     public static final int screenH = 800;
     public static final int screenW = 480;
+    public static long dogTargetChangeTime = 3; // 3 seconds
 
 
-
-	public static Global getInstance() {
+    public static Global getInstance() {
         return ourInstance;
     }
     private Global() {

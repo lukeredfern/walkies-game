@@ -48,8 +48,6 @@ public class GameScreen implements Screen {
     Dog dogPlayer;
     Player player;
 
-    float targetX;
-    float targetY;
     float targetR;
     float targetT;
     Array<Rectangle> backgrounds;
@@ -77,8 +75,6 @@ public class GameScreen implements Screen {
         leadDamping = 100.0f;
 
         //target
-        targetX = screenW / 2;
-        targetY = 200;
         targetR = 20;
         targetT = 3;
 
@@ -98,13 +94,13 @@ public class GameScreen implements Screen {
         camera = new OrthographicCamera();
         camera.setToOrtho(false, screenW, screenH);
 
-        // create width Rectangle to logically represent the bucket
+        // initialize Player
         player = new Player(screenW / 2, 20, manUpImages.get(0).getWidth(), manUpImages.get(0).getHeight());
         player.maxSpeed = 400; // pixels per nanosecond
 
         lastStepTime = TimeUtils.nanoTime();
 
-        //Dog player
+        //Initialize Player's dog
         dogPlayer = new Dog(screenW / 2, 100, 48, 48);
         dogPlayer.addSpriteSet(new String[]{"dog_sprite_0_R.png", "dog_sprite_0_M.png", "dog_sprite_0_L.png"});
         dogPlayer.addSpriteSet(new String[]{"dog_sprite_2_R.png", "dog_sprite_2_M.png", "dog_sprite_2_L.png"});
@@ -193,9 +189,8 @@ public class GameScreen implements Screen {
     }
 
     private void changeDogTarget() {
-        if (TimeUtils.nanoTime() - lastDogTargetTime > 1e9 * 3) { // every 3 seconds
-            dogPlayer.targetObstacle = obstacles.get(MathUtils.random(0, obstacles.size - 1));
-            dogPlayer.velocity.setZero();
+        if (TimeUtils.nanoTime() - lastDogTargetTime > 1e9 * Global.dogTargetChangeTime) { // every 3 seconds
+            dogPlayer.setTargetObstacle(obstacles.get(MathUtils.random(0, obstacles.size - 1)));
             lastDogTargetTime = TimeUtils.nanoTime();
         }
     }
