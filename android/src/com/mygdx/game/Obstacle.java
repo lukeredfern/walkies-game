@@ -74,7 +74,7 @@ public class Obstacle {
                 this.a = 48;
                 this.b = 48;
                 this.sprite = new Texture(Gdx.files.internal("dog_sprite_4_R.png"));
-                this.penalty = -0.01f;
+                this.penalty = -0.05f;
                 this.persist = true;
                 break;
             case 1:
