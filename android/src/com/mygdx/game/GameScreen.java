@@ -26,6 +26,8 @@ public class GameScreen implements Screen {
     Texture dropImage;
     Texture grassBackGround;
     Texture dogSprite;
+    Texture boneSprite;
+    ArrayList<Texture> obstacleSprites;
     ArrayList<Texture> manUpImages;
     Sound dropSound;
     Music rainMusic;
@@ -51,8 +53,12 @@ public class GameScreen implements Screen {
     float targetR;
     float targetT;
     Array<Rectangle> backgrounds;
+
+    float gameScore;
+    float barWidthRatio = 0.8f;
     private long lastDogTargetTime;
 
+    float[] obstaclePenalty;
 
     public GameScreen(final Drop gam) {
         this.game = gam;
@@ -74,6 +80,13 @@ public class GameScreen implements Screen {
         leadStiffness = 10000.0f;
         leadDamping = 100.0f;
 
+        // dog
+        dogPlayer.mass = 1;
+        dogPlayer.damping = 10;
+        dogPlayer.force = 1000;
+        dogPlayer.direction = 0;
+        dogPlayer.directionSpeed = 0;
+
         //target
         targetR = 20;
         targetT = 3;
@@ -94,9 +107,9 @@ public class GameScreen implements Screen {
         camera = new OrthographicCamera();
         camera.setToOrtho(false, screenW, screenH);
 
-        // initialize Player
-        player = new Player(screenW / 2, 20, manUpImages.get(0).getWidth(), manUpImages.get(0).getHeight());
-        player.maxSpeed = 400; // pixels per nanosecond
+        // create width Rectangle to logically represent the bucket
+        player = new MovingBody(screenW / 2, 20,manUpImages.get(0).getWidth(),manUpImages.get(0).getHeight());
+        player.maxSpeed = 10;
 
         lastStepTime = TimeUtils.nanoTime();
 
@@ -113,6 +126,11 @@ public class GameScreen implements Screen {
 
         // create the obstacles array and spawn the first raindrop
         obstacles = new Array<>();
+
+        // Score
+        gameScore = 0.5f;
+
+	}
         for (int i = 0; i < MathUtils.random(1, 2); i++) {
             Obstacle obstacle = new Obstacle(MathUtils.random(0, screenW - 64), screenH, 48, 48, 0f, -Global.backgroundScrollSpeed);
             obstacles.add(obstacle);
@@ -186,6 +204,68 @@ public class GameScreen implements Screen {
         moveObstacles(dt);
 
         moveBackground(dt);
+
+        updateGameScore(dt);
+    }
+
+    private void drawScoreIndicator() {
+        float thickness = 40;
+        float weight = 2;
+        float offset = 20;
+        Gdx.gl.glEnable(GL10.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+        shapeRenderer.setProjectionMatrix(camera.combined);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(120.0f / 255, 144.0f / 255, 156.0f / 255, 0.8f);
+        shapeRenderer.rect(screenW / 2 - 0.5f * screenW * barWidthRatio, offset, screenW * barWidthRatio, thickness);
+        if (gameScore>0.5) {
+            shapeRenderer.setColor(2.0f / 255, 136.0f / 255, 209.0f / 255, 1);
+            shapeRenderer.rect(screenW/2, offset, (gameScore - 0.5f) * screenW * barWidthRatio, thickness);
+        } else {
+            shapeRenderer.setColor(229.0f / 255, 57.0f / 255, 53.0f / 255, 1);
+            shapeRenderer.rect(screenW/2, offset, -(0.5f-gameScore) * screenW * barWidthRatio, thickness);
+        }
+        shapeRenderer.end();
+        Gdx.gl.glDisable(GL10.GL_BLEND);
+
+        // Border
+        shapeRenderer.setProjectionMatrix(camera.combined);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        //shapeRenderer.setColor(62.0f / 255, 39.0f / 255, 35.0f / 255, 1);
+        //shapeRenderer.rect(dogPlayer.getRectangle().x, dogPlayer.getRectangle().y, dogPlayer.getRectangle().width, dogPlayer.getRectangle().height);
+        shapeRenderer.setColor(0, 0, 0, 1);
+        shapeRenderer.rectLine(screenW / 2 - 0.5f * screenW * barWidthRatio - weight / 2, offset, screenW / 2 + 0.5f * screenW * barWidthRatio + weight / 2, offset, weight * 2);
+        shapeRenderer.rectLine(screenW / 2 - 0.5f * screenW * barWidthRatio - weight / 2, offset + thickness, screenW / 2 + 0.5f * screenW * barWidthRatio + weight / 2, offset + thickness, weight * 2);
+        shapeRenderer.rectLine(screenW / 2 - 0.5f * screenW * barWidthRatio, offset-weight/2, screenW / 2 - 0.5f * screenW * barWidthRatio, offset+thickness+weight/2, weight*2);
+        shapeRenderer.rectLine(screenW / 2 + 0.5f * screenW * barWidthRatio, offset - weight / 2, screenW / 2 + 0.5f * screenW * barWidthRatio, offset + thickness + weight / 2, weight*2);
+
+        shapeRenderer.rectLine(screenW / 2 - 0.25f * screenW * barWidthRatio, offset - weight / 2, screenW / 2 - 0.25f * screenW * barWidthRatio, offset + thickness * 0.2f + weight / 2, weight * 2);
+        shapeRenderer.rectLine(screenW / 2 - 0.25f * screenW * barWidthRatio, offset+thickness*0.8f-weight/2, screenW / 2 - 0.25f * screenW * barWidthRatio, offset+thickness+weight/2, weight*2);
+
+        shapeRenderer.rectLine(screenW / 2 , offset - weight / 2, screenW / 2 , offset + thickness * 0.2f + weight / 2, weight * 2);
+        shapeRenderer.rectLine(screenW / 2 , offset+thickness*0.8f-weight/2, screenW / 2, offset+thickness+weight/2, weight*2);
+
+        shapeRenderer.rectLine(screenW / 2 + 0.25f * screenW * barWidthRatio, offset - weight / 2, screenW / 2 + 0.25f * screenW * barWidthRatio, offset + thickness * 0.2f + weight / 2, weight * 2);
+        shapeRenderer.rectLine(screenW / 2 + 0.25f * screenW * barWidthRatio, offset + thickness * 0.8f - weight / 2, screenW / 2 + 0.25f * screenW * barWidthRatio, offset + thickness+weight/2, weight*2);
+
+
+        shapeRenderer.setColor(1, 1, 1, 1);
+        shapeRenderer.rectLine(screenW / 2 - 0.5f * screenW * barWidthRatio, offset, screenW / 2 + 0.5f * screenW * barWidthRatio, offset, weight);
+        shapeRenderer.rectLine(screenW / 2 - 0.5f * screenW * barWidthRatio, offset+thickness, screenW / 2 + 0.5f * screenW * barWidthRatio, offset+thickness, weight);
+        shapeRenderer.rectLine(screenW / 2 - 0.5f * screenW * barWidthRatio, offset, screenW / 2 - 0.5f * screenW * barWidthRatio, offset+thickness, weight);
+        shapeRenderer.rectLine(screenW / 2 + 0.5f * screenW * barWidthRatio, offset, screenW / 2 + 0.5f * screenW * barWidthRatio, offset + thickness, weight);
+
+        shapeRenderer.rectLine(screenW / 2 - 0.25f * screenW * barWidthRatio, offset, screenW / 2 - 0.25f * screenW * barWidthRatio, offset+thickness*0.2f, weight);
+        shapeRenderer.rectLine(screenW / 2 - 0.25f * screenW * barWidthRatio, offset+thickness*0.8f, screenW / 2 - 0.25f * screenW * barWidthRatio, offset+thickness, weight);
+
+        shapeRenderer.rectLine(screenW / 2 , offset, screenW / 2 , offset + thickness * 0.2f, weight);
+        shapeRenderer.rectLine(screenW / 2 , offset+thickness*0.8f, screenW / 2, offset+thickness, weight);
+
+        shapeRenderer.rectLine(screenW / 2 + 0.25f * screenW * barWidthRatio, offset, screenW / 2 + 0.25f * screenW * barWidthRatio, offset+thickness*0.2f, weight);
+        shapeRenderer.rectLine(screenW / 2 + 0.25f * screenW * barWidthRatio, offset+thickness*0.8f, screenW / 2 + 0.25f * screenW * barWidthRatio, offset+thickness, weight);
+
+
+        shapeRenderer.end();
     }
 
     private void changeDogTarget() {
@@ -240,14 +320,22 @@ public class GameScreen implements Screen {
     }
 
     private void drawObstacles() {
+        game.batch.begin();
+
+
         shapeRenderer.setProjectionMatrix(camera.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(62.0f / 255, 39.0f / 255, 35.0f / 255, 1);
-        for (MovingBody obs : obstacles) {
-            shapeRenderer.rect(obs.getRectangle().x, obs.getRectangle().y, obs.getRectangle().width, obs.getRectangle().height);
+        for (Obstacle obs : obstacles) {
+            if (obs.sprite==null) {
+                shapeRenderer.rect(obs.getRectangle().x, obs.getRectangle().y, obs.getRectangle().width, obs.getRectangle().height);
+            }   else {
+                game.batch.draw(obs.sprite, obs.getRectangle().x, obs.getRectangle().y, obs.getRectangle().width, obs.getRectangle().height);
+            }
         }
 
         shapeRenderer.end();
+        game.batch.end();
     }
 
     private void drawBackground() {
@@ -328,11 +416,21 @@ public class GameScreen implements Screen {
                 iter.remove();
             if (obstacle.enabledState && obstacle.getRectangle().overlaps(dogPlayer.getRectangle())) {
                 obstaclesHit++;
+                gameScore += obstacle.penalty;
                 //dropSound.play();
                 //iter.remove();
                 obstacle.enabledState = false;
+                if (!obstacle.persist){
+                    iter.remove();
+                }
             }
         }
+    }
+
+    private void updateGameScore(float dt){
+        gameScore += 0.005*dt;
+        gameScore = Math.max(gameScore,0);
+        gameScore = Math.min(gameScore,1);
     }
 
     private void moveBackground(float dt) {
