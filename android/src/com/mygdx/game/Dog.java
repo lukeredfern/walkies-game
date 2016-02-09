@@ -72,6 +72,58 @@ public class Dog extends MovingBody {
 	}
 
 	public void update(float dt, Player player) {
+
+        TargettingAlgorithm();
+
+        // Calculate vector to the target obstacle
+        Vector2 targetVector = this.target.cpy().sub(this.position);
+
+        // Calculate distance to target
+        float distanceToTarget = targetVector.len();
+
+        // if the distance to target is significant, do the calculations
+        if (distanceToTarget > 5) {
+            // calculate force of dog towards target
+            Vector2 fDog = targetVector.cpy().scl(5);
+
+            // calculate lead vector
+            Vector2 leadVec = player.position.cpy().sub(this.position);
+
+            // calcualte lead 'distance'
+            float leadDist = leadVec.len();
+
+            // calculate 'stretch' factor
+            float dL = leadDist / Global.leadLength;
+
+            Vector2 fLead;
+            if (dL > 1) {
+                // lead is stretched, apply force proportional to lead extension
+                fLead = leadVec.nor().scl(dL * Global.leadStiffness);
+            } else {
+                // lead is slack so no force applied
+                fLead = new Vector2(0, 0);
+            }
+
+            // calculate resultant force on dog
+            Vector2 fTotal = fDog.add(fLead);
+
+            // calculate acceleration
+            this.acceleration = fTotal.scl(1 / this.mass); // a = F / m
+
+            // calculate velocity
+            this.velocity.add(this.acceleration.cpy().scl(dt));
+
+        } else {
+            // Dog is at target obstacle so match the velocity
+            this.velocity.setZero();// = targetObstacle.velocity.cpy();
+        }
+
+        // adjust the position based on the velocity * elapsed time
+        this.position.add(velocity.cpy().scl(dt));
+
+        // make sure the dog remains on screen
+        clamp();
+
 		/*
 
 		// Dog model
@@ -109,97 +161,14 @@ public class Dog extends MovingBody {
 		//Log.d("v", String.valueOf(dogPlayer.vx) + "," + String.valueOf(dogPlayer.vy));
 
 		dogPlayer.x = dogPlayer.x + dogPlayer.vx*dt;
-		dogPlayer.y = dogPlayer.y + dogPlayer.vy*dt;
-
-        // Calculate vector to the target obstacle
-        Vector2 target = targetObstacle.position.cpy().sub(this.position);
-
-        // Calculate distance to target
-        float distanceToTarget = target.len();
-
-        // if the distance to target is significant, do the calculations
-        if (distanceToTarget > 5) {
-            // Set the velocity of the dog to this vector scaled to its max speed
-            this.velocity = target.cpy().nor().scl(this.maxSpeed).clamp(0, maxSpeed);
-
-        } else {
-            // Dog is at target obstacle so match the velocity
-            this.velocity = targetObstacle.velocity.cpy();
-        }
-
-        // adjust the position based on the velocity * elapsed time
-        this.position.add(velocity.cpy().scl(dt));
-
-        // make sure the dog remains on screen
-        clamp();
-
-        /* This model results in a more realistic dog behaviour - the dog dashes between
-         * random obstacles to investigate
-         *
-         * Now we need to make sure the dog stays within the leash distance of the player
-         * The leash only has an effect when
-         *
-         */
-
-		/* calculate lead vector
-		Vector2 leadVec = player.position.cpy().sub(this.position);
-
-		// calcualte lead 'distance'
-		float leadDist = leadVec.len();
-
-		// calculate 'stretch' factor
-		float dL = leadDist / Global.leadLength;
-
-		Vector2 fLead;
-		if (dL > 1) {
-			// lead is stretched, apply force proportional to lead extension
-			fLead = leadVec.nor().scl(dL * Global.leadStiffness);
-		} else {
-			// lead is slack so no force applied
-			fLead = new Vector2(0, 0);
-		}
-
-		fLead.setZero();
-
-		//fLead.setZero();
-
-		// generate random dog force
-		// TODO: dog behaviour algorithm
-		// dog behaviour v1
-		/* Dog picks a random obstacle and tries to go towards it
-		   Target is changed every few seconds
-		 *
-		if (targetObstacle != null) {
-			Vector2 target = targetObstacle.position.cpy();
-			float distanceToTarget = target.cpy().sub(position).len();
-
-			if (distanceToTarget > 5) {
-				Vector2 fDog = target.cpy().sub(position).nor().scl(distanceToTarget);
-
-				// damping force because reasons
-				Vector2 fDogDamping = velocity.cpy().scl(-Global.leadDamping);
-				fDogDamping.setZero();
-
-				// calculate total force
-				Vector2 fTotal = fLead.cpy().add(fDog).add(fDogDamping);
-
-				// calculate acceleration
-				acceleration = fTotal.cpy().scl(1 / mass); // a = F / m
-
-				// calculate new velocity from acceleration
-				velocity.add(acceleration.cpy().scl(dt)).clamp(0, maxSpeed);
-			} else {
-				velocity = targetObstacle.velocity;
-			}
-		} else {
-			velocity.setZero();
-		}
-
-		// calculate new position from velocity
-		position.add(velocity.cpy().scl(dt));
-
-		clamp(); // clamp position */
+		dogPlayer.y = dogPlayer.y + dogPlayer.vy*dt;*/
 	}
+
+    private void TargettingAlgorithm() {
+        if (this.targetObstacle != null) {
+            this.target = this.targetObstacle.position.cpy();
+        }
+    }
 
 
 }

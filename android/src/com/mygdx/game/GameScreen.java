@@ -29,8 +29,6 @@ public class GameScreen implements Screen {
     Texture boneSprite;
     ArrayList<Texture> obstacleSprites;
     ArrayList<Texture> manUpImages;
-    Sound dropSound;
-    Music rainMusic;
     OrthographicCamera camera;
     Array<Obstacle> obstacles;
     long lastObsTime;
@@ -80,13 +78,6 @@ public class GameScreen implements Screen {
         leadStiffness = 10000.0f;
         leadDamping = 100.0f;
 
-        // dog
-        dogPlayer.mass = 1;
-        dogPlayer.damping = 10;
-        dogPlayer.force = 1000;
-        dogPlayer.direction = 0;
-        dogPlayer.directionSpeed = 0;
-
         //target
         targetR = 20;
         targetT = 3;
@@ -108,8 +99,8 @@ public class GameScreen implements Screen {
         camera.setToOrtho(false, screenW, screenH);
 
         // create width Rectangle to logically represent the bucket
-        player = new MovingBody(screenW / 2, 20,manUpImages.get(0).getWidth(),manUpImages.get(0).getHeight());
-        player.maxSpeed = 10;
+        player = new Player(screenW / 2, 20,manUpImages.get(0).getWidth(),manUpImages.get(0).getHeight());
+        player.maxSpeed = 200;
 
         lastStepTime = TimeUtils.nanoTime();
 
@@ -131,13 +122,6 @@ public class GameScreen implements Screen {
         gameScore = 0.5f;
 
 	}
-        for (int i = 0; i < MathUtils.random(1, 2); i++) {
-            Obstacle obstacle = new Obstacle(MathUtils.random(0, screenW - 64), screenH, 48, 48, 0f, -Global.backgroundScrollSpeed);
-            obstacles.add(obstacle);
-        }
-        lastObsTime = TimeUtils.nanoTime();
-        lastDogTargetTime = 0;
-    }
 
 	@Override
     public void render(float delta) {
@@ -188,6 +172,8 @@ public class GameScreen implements Screen {
         drawPlayer();
         drawBoundingBoxes();
         drawScore();
+
+        drawScoreIndicator();
 
         // process user input
         processUserInput();
@@ -269,7 +255,8 @@ public class GameScreen implements Screen {
     }
 
     private void changeDogTarget() {
-        if (TimeUtils.nanoTime() - lastDogTargetTime > 1e9 * Global.dogTargetChangeTime) { // every 3 seconds
+        if (TimeUtils.nanoTime() - lastDogTargetTime > 1e9 * Global.dogTargetChangeTime // every 3 seconds
+                && obstacles.size > 0) {
             dogPlayer.setTargetObstacle(obstacles.get(MathUtils.random(0, obstacles.size - 1)));
             lastDogTargetTime = TimeUtils.nanoTime();
         }
@@ -280,6 +267,7 @@ public class GameScreen implements Screen {
 			if (MathUtils.random(1, 100) > Global.obstacleSpawnRate) {
 				for (int i = 0; i< MathUtils.random(1, Global.maxObstacleSpawnAtOnce); i++) {
 					Obstacle obstacle = new Obstacle(MathUtils.random(0, screenW - 64), screenH, 48, 48, 0f, -Global.backgroundScrollSpeed);
+                    obstacle.setObstacleType(ObstacleType.values()[MathUtils.random(0, ObstacleType.values().length - 1)]);
 					obstacles.add(obstacle);
 				}
 			}
@@ -327,7 +315,7 @@ public class GameScreen implements Screen {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(62.0f / 255, 39.0f / 255, 35.0f / 255, 1);
         for (Obstacle obs : obstacles) {
-            if (obs.sprite==null) {
+            if (obs.sprite == null) {
                 shapeRenderer.rect(obs.getRectangle().x, obs.getRectangle().y, obs.getRectangle().width, obs.getRectangle().height);
             }   else {
                 game.batch.draw(obs.sprite, obs.getRectangle().x, obs.getRectangle().y, obs.getRectangle().width, obs.getRectangle().height);
@@ -410,7 +398,7 @@ public class GameScreen implements Screen {
         // value our drops counter and add width sound effect.
         Iterator<Obstacle> iter = obstacles.iterator();
         while (iter.hasNext()) {
-            MovingBody obstacle = iter.next();
+            Obstacle obstacle = iter.next();
             obstacle.update(dt);
             if (obstacle.position.y + 64 < 0)
                 iter.remove();
